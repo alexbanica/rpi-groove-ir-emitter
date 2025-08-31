@@ -16,12 +16,6 @@ except Exception as e:
 
 
 class IREmitter:
-    """
-    Play raw IR pulses using pigpio waveform API.
-
-    Provide pulses list like [mark, space, mark, space, ...] in microseconds.
-    """
-
     def __init__(self, pi: pigpio.pi, gpio_out: int, carrier_hz: int = DEFAULT_CARRIER_HZ, duty_cycle: float = DEFAULT_DUTY_CYCLE):
         self.pi = pi
         self.gpio = gpio_out
@@ -30,10 +24,6 @@ class IREmitter:
         self._carrier_on_wave_id = None
 
     def _carrier_wave(self, mark_us: int):
-        """
-        Create a waveform chunk that outputs a carrier (on/off pulses) on self.gpio
-        for approximately mark_us microseconds. Returns list of pigpio pulses.
-        """
         # pigpio waveforms are defined using pigpio.pulse objects with gpio_on, gpio_off, delay (us)
         # To create a carrier we toggle the GPIO on/off for each carrier cycle.
         # Carrier period (microseconds)
@@ -55,10 +45,6 @@ class IREmitter:
         return pulses
 
     def play(self, pulses: List[int], repeat: int = 1):
-        """
-        Play the pulses sequence. pulses is expected to be [mark, space, mark, space, ...]
-        repeat: number of times to repeat the whole sequence.
-        """
         pi = self.pi
         gpio = self.gpio
 
