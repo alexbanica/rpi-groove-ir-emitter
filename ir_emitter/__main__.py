@@ -17,7 +17,7 @@ except Exception as e:
 def main():
     parser = argparse.ArgumentParser(description="Record IR signals (raw pulses).")
     parser.add_argument("file", type=str, help="JSON file with recorded pulses")
-    parser.add_argument("--out-gpio", type=int, default=18, help="GPIO pin number for IR transmitter (BCM)")
+    parser.add_argument("--out-gpio", type=int, default=12, help="GPIO pin number for IR transmitter (BCM)")
     parser.add_argument("--carrier", type=int, default=DEFAULT_CARRIER_HZ, help="Carrier frequency in Hz (e.g. 38000)")
     parser.add_argument("--repeat", type=int, default=1, help="How many times to repeat the frame")
 
