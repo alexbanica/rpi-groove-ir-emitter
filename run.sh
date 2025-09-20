@@ -1,6 +1,6 @@
-#!/bin/bash
+#!/bin/sh
 
-while [[ $# -gt 0 ]]; do
+while [ $# -gt 0 ]; do
     case $1 in
         --input)
             input_file="$2"
