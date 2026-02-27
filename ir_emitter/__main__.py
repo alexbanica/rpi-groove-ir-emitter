@@ -3,7 +3,6 @@
 
 import argparse
 import sys
-import os
 from ir_emitter.IREmitter import IREmitter
 from ir_emitter import DEFAULT_CARRIER_HZ
 
@@ -23,9 +22,8 @@ def main():
     parser.add_argument("--repeat", type=int, default=1, help="How many times to repeat the frame")
 
     args = parser.parse_args()
-    
-    pigpio_host = os.environ.get('PIGPIO_HOST', 'localhost')
-    pi = pigpio.pi(pigpio_host)
+
+    pi = pigpio.pi()
     if not pi.connected:
         print("Could not connect to pigpio daemon. Start it with: sudo pigpiod")
         sys.exit(2)
