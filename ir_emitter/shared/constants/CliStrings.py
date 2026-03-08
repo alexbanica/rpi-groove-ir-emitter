@@ -1,0 +1,12 @@
+class CliStrings:
+    DESCRIPTION = "Record IR signals (raw pulses)."
+    ARG_FILE_HELP = "JSON file with recorded pulses"
+    ARG_OUT_GPIO_HELP = "GPIO pin number for IR transmitter (BCM)"
+    ARG_CARRIER_HELP = "Carrier frequency in Hz (e.g. 38000)"
+    ARG_REPEAT_HELP = "How many times to repeat the frame"
+    PIGPIO_IMPORT_ERROR_1 = "Error importing pigpio. Make sure 'pigpio' Python package is installed."
+    PIGPIO_IMPORT_ERROR_2 = "Install: pip3 install pigpio"
+    PIGPIO_IMPORT_ERROR_3 = "Also start the daemon: sudo pigpiod"
+    PIGPIO_CONNECT_ERROR = "Could not connect to pigpio daemon. Start it with: sudo pigpiod"
+    LOADED_DURATIONS = "Loaded {count} durations from {file} (recorded input GPIO: {gpio_in_file})"
+    PLAYBACK_FINISHED = "Playback finished."
