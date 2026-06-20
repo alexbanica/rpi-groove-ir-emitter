@@ -1,5 +1,5 @@
 import os
-from setuptools import setup
+from setuptools import find_packages, setup
 
 dependencies = []
 
@@ -20,8 +20,7 @@ setup(
     author='Alex Banica',
     author_email='ionut.alexandru.banica@gmail.com',
     python_requires='>=3.9',
-    package_dir={'': 'ir_emitter'},
-    packages=['rpi-groove-ir-emitter', ''],
+    packages=find_packages(include=['ir_emitter', 'ir_emitter.*']),
     install_requires=dependencies,
     classifiers=[
         'Development Status :: 4 - Beta',
