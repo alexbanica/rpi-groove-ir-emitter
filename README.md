@@ -50,21 +50,33 @@ Always verify polarity and maximum current ratings for your emitter module.
 
 ## Usage
 
-Play a JSON pulse file:
+Use the launcher so it uses the repository virtual environment:
 ```bash
-/usr/bin/python3 -m ir_emitter examples/ventilator-onoff.json --out-gpio 12 --carrier 38000 --repeat 1
+./run.sh --input examples/ventilator-onoff.json
 ```
 
-Parameters:
+`run.sh` resolves the repository root from its location, validates `--input`, and:
+- uses `.venv/bin/python` when available;
+- creates `.venv` with `python3 -m venv .venv` on first run;
+- installs the project into `.venv` with `./.venv/bin/python -m pip install .`.
+
+`run.sh` intentionally supports only the `--input` launcher option and passes only the resolved file path to the module execution. For custom GPIO/cycle/repeat settings, use the existing positional-module path:
+```bash
+python -m ir_emitter examples/ventilator-onoff.json --out-gpio 12 --carrier 38000 --repeat 1
+```
+
+Module parameters:
 - `file` (positional): Path to JSON file containing the recorded pulses
 - `--out-gpio`: BCM pin number for the transmitter (default: 12)
 - `--carrier`: Carrier frequency in Hz (default: commonly 38000)
 - `--repeat`: How many times to replay the entire frame (default: 1)
 
-Before running, ensure:
+Before any playback, ensure:
 ```bash
 sudo pigpiod
 ```
+
+`run.sh` does not start `pigpio` for you.
 
 ## Troubleshooting
 

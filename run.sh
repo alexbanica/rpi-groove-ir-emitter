@@ -1,5 +1,9 @@
 #!/bin/sh
 
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+REPO_ROOT="$SCRIPT_DIR"
+VENV_PYTHON="$REPO_ROOT/.venv/bin/python"
+
 while [ $# -gt 0 ]; do
     case $1 in
         --input)
@@ -22,7 +26,19 @@ if [ ! -f "$input_file" ]; then
     exit 1
 fi
 
-/usr/bin/python3 -m ir_emitter "$input_file"
+if [ ! -x "$VENV_PYTHON" ]; then
+    (cd "$REPO_ROOT" && python3 -m venv .venv)
+    if [ $? -ne 0 ]; then
+        echo "Error: Failed to create virtual environment at $REPO_ROOT/.venv."
+        exit 1
+    fi
+
+    (cd "$REPO_ROOT" && "$VENV_PYTHON" -m pip install .)
+    if [ $? -ne 0 ]; then
+        echo "Error: Failed to install project into $REPO_ROOT/.venv."
+        exit 1
+    fi
+fi
+
+"$VENV_PYTHON" -m ir_emitter "$input_file"
 exit $?
-    
-  
