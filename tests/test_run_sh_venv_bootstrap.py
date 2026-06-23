@@ -165,6 +165,150 @@ class TestRunShVenvBootstrap(unittest.TestCase):
         self.assertIn("does not exist", result.stdout + result.stderr)
         self.assertEqual(calls, [])
 
+    def test_no_venv_flag_invokes_system_python(self) -> None:
+        repo = self._copy_repo()
+        calls_log = repo / "calls.log"
+        stub_dir = repo / "stubbin"
+        stub_dir.mkdir()
+
+        self._write_python3_stub(stub_dir, calls_log)
+        self._write_venv_python_stub(
+            repo / ".venv" / "bin" / "python",
+            calls_log,
+        )
+        input_file = repo / "no_venv_input.json"
+        input_file.write_text("{}", encoding="utf-8")
+
+        result = self._run_run_sh(
+            repo,
+            ["--no-venv", "--input", str(input_file)],
+            calls_log,
+            extra_env={"PATH": f"{stub_dir}:{os.environ.get('PATH', '')}"},
+        )
+
+        calls = self._read_calls(calls_log)
+        self.assertEqual(result.returncode, 0, msg=result.stderr)
+        self.assertTrue(
+            any("python3 -m ir_emitter" in line for line in calls),
+            calls,
+        )
+        self.assertFalse(
+            any("/.venv/bin/python" in line for line in calls),
+            calls,
+        )
+        self.assertFalse(any(" -m venv .venv" in line for line in calls), calls)
+        self.assertFalse(any(" -m pip install ." in line for line in calls), calls)
+        self.assertFalse(any("--no-venv" in line for line in calls), calls)
+
+    def test_no_venv_flag_without_venv_does_not_bootstrap(self) -> None:
+        repo = self._copy_repo()
+        calls_log = repo / "calls.log"
+        stub_dir = repo / "stubbin"
+        stub_dir.mkdir()
+        shutil.rmtree(repo / ".venv", ignore_errors=True)
+
+        self._write_python3_stub(stub_dir, calls_log)
+        input_file = repo / "no_venv_missing_venv_input.json"
+        input_file.write_text("{}", encoding="utf-8")
+
+        result = self._run_run_sh(
+            repo,
+            ["--no-venv", "--input", str(input_file)],
+            calls_log,
+            extra_env={"PATH": f"{stub_dir}:{os.environ.get('PATH', '')}"},
+        )
+
+        calls = self._read_calls(calls_log)
+        self.assertEqual(result.returncode, 0, msg=result.stderr)
+        self.assertTrue(any("python3 -m ir_emitter" in line for line in calls), calls)
+        self.assertFalse(any(" -m venv .venv" in line for line in calls), calls)
+        self.assertFalse(any(" -m pip install ." in line for line in calls), calls)
+        self.assertFalse((repo / ".venv").exists())
+
+    def test_no_venv_env_var_invokes_system_python(self) -> None:
+        repo = self._copy_repo()
+        calls_log = repo / "calls.log"
+        stub_dir = repo / "stubbin"
+        stub_dir.mkdir()
+
+        self._write_python3_stub(stub_dir, calls_log)
+        self._write_venv_python_stub(
+            repo / ".venv" / "bin" / "python",
+            calls_log,
+        )
+        input_file = repo / "no_venv_env_input.json"
+        input_file.write_text("{}", encoding="utf-8")
+
+        result = self._run_run_sh(
+            repo,
+            ["--input", str(input_file)],
+            calls_log,
+            extra_env={
+                "PATH": f"{stub_dir}:{os.environ.get('PATH', '')}",
+                "RUN_SH_NO_VENV": "1",
+            },
+        )
+
+        calls = self._read_calls(calls_log)
+        self.assertEqual(result.returncode, 0, msg=result.stderr)
+        self.assertTrue(
+            any("python3 -m ir_emitter" in line for line in calls),
+            calls,
+        )
+        self.assertFalse(
+            any("/.venv/bin/python" in line for line in calls),
+            calls,
+        )
+        self.assertFalse(any(" -m venv .venv" in line for line in calls), calls)
+        self.assertFalse(any(" -m pip install ." in line for line in calls), calls)
+
+    def test_no_venv_env_var_without_venv_does_not_bootstrap(self) -> None:
+        repo = self._copy_repo()
+        calls_log = repo / "calls.log"
+        stub_dir = repo / "stubbin"
+        stub_dir.mkdir()
+        shutil.rmtree(repo / ".venv", ignore_errors=True)
+
+        self._write_python3_stub(stub_dir, calls_log)
+        input_file = repo / "no_venv_env_missing_venv_input.json"
+        input_file.write_text("{}", encoding="utf-8")
+
+        result = self._run_run_sh(
+            repo,
+            ["--input", str(input_file)],
+            calls_log,
+            extra_env={
+                "PATH": f"{stub_dir}:{os.environ.get('PATH', '')}",
+                "RUN_SH_NO_VENV": "1",
+            },
+        )
+
+        calls = self._read_calls(calls_log)
+        self.assertEqual(result.returncode, 0, msg=result.stderr)
+        self.assertTrue(any("python3 -m ir_emitter" in line for line in calls), calls)
+        self.assertFalse(any(" -m venv .venv" in line for line in calls), calls)
+        self.assertFalse(any(" -m pip install ." in line for line in calls), calls)
+        self.assertFalse((repo / ".venv").exists())
+
+    def test_no_venv_missing_input_exits_before_python_startup(self) -> None:
+        repo = self._copy_repo()
+        calls_log = repo / "calls.log"
+        stub_dir = repo / "stubbin"
+        stub_dir.mkdir()
+        self._write_python3_stub(stub_dir, calls_log)
+
+        result = self._run_run_sh(
+            repo,
+            ["--no-venv"],
+            calls_log,
+            extra_env={"PATH": f"{stub_dir}:{os.environ.get('PATH', '')}"},
+        )
+
+        calls = self._read_calls(calls_log)
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("Input file not specified", result.stdout + result.stderr)
+        self.assertEqual(calls, [])
+
 
 if __name__ == "__main__":
     unittest.main()

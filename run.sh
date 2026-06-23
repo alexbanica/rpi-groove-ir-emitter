@@ -3,9 +3,18 @@
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 REPO_ROOT="$SCRIPT_DIR"
 VENV_PYTHON="$REPO_ROOT/.venv/bin/python"
+NO_VENV=0
+
+if [ "$RUN_SH_NO_VENV" = "1" ]; then
+    NO_VENV=1
+fi
 
 while [ $# -gt 0 ]; do
     case $1 in
+        --no-venv)
+            NO_VENV=1
+            shift
+            ;;
         --input)
             input_file="$2"
             shift 2
@@ -24,6 +33,11 @@ fi
 if [ ! -f "$input_file" ]; then
     echo "Error: Input file '$input_file' does not exist."
     exit 1
+fi
+
+if [ "$NO_VENV" = "1" ]; then
+    python3 -m ir_emitter "$input_file"
+    exit $?
 fi
 
 if [ ! -x "$VENV_PYTHON" ]; then

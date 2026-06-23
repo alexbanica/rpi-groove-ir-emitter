@@ -60,7 +60,15 @@ Use the launcher so it uses the repository virtual environment:
 - creates `.venv` with `python3 -m venv .venv` on first run;
 - installs the project into `.venv` with `./.venv/bin/python -m pip install .`.
 
-`run.sh` intentionally supports only the `--input` launcher option and passes only the resolved file path to the module execution. For custom GPIO/cycle/repeat settings, use the existing positional-module path:
+For containers that already include the required Python packages in the image, bypass the repository `.venv`:
+```bash
+./run.sh --no-venv --input examples/ventilator-onoff.json
+RUN_SH_NO_VENV=1 ./run.sh --input examples/ventilator-onoff.json
+```
+
+No-venv mode runs `python3 -m ir_emitter <file>` and does not inspect, create, or install into `.venv`.
+
+`run.sh` intentionally supports only launcher options (`--input` and `--no-venv`) and passes only the resolved file path to the module execution. For custom GPIO/cycle/repeat settings, use the existing positional-module path:
 ```bash
 python -m ir_emitter examples/ventilator-onoff.json --out-gpio 12 --carrier 38000 --repeat 1
 ```
