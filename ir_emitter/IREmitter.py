@@ -8,7 +8,7 @@ from ir_emitter import DEFAULT_CARRIER_HZ, DEFAULT_DUTY_CYCLE
 
 try:
     import pigpio
-except Exception as e:
+except Exception:
     print("Error importing pigpio. Make sure 'pigpio' Python package is installed.")
     print("Install: pip3 install pigpio")
     print("Also start the daemon: sudo pigpiod")

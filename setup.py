@@ -1,7 +1,20 @@
 import os
+import re
+from pathlib import Path
+
 from setuptools import find_packages, setup
 
 dependencies = []
+
+
+def _read_version() -> str:
+    init_file = Path(__file__).resolve().parent / "ir_emitter" / "__init__.py"
+    text = init_file.read_text(encoding="utf-8")
+    match = re.search(r'^__version__\s*=\s*[\"\']([^\"\']+)[\"\']$', text, re.MULTILINE)
+    if not match:
+        raise RuntimeError("Could not read __version__ from ir_emitter/__init__.py")
+    return match.group(1)
+
 
 if os.path.exists('/sys/bus/platform/drivers/gpiomem-bcm2835'):
     dependencies += ['RPi.GPIO', 'spidev']
@@ -14,7 +27,7 @@ dependencies += ['pigpio']
 
 setup(
     name='rpi-groove-ir-emitter',
-    version='1.0.0',
+    version=_read_version(),
     description='RPI Groove IR Emitter',
     long_description='',
     author='Alex Banica',

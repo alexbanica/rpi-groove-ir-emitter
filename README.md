@@ -106,6 +106,34 @@ sudo pigpiod
 - Keep JSON command files small and test frequently on hardware
 - Contributions are welcome via pull requests and issues
 
+## CI and release publishing
+
+- Quality checks:
+  - Canonical lint command: `python -m ruff check setup.py ir_emitter tests scripts`
+  - Canonical test command: `python -m unittest discover -s tests -p 'test_*.py'`
+- GitHub Actions gates:
+  - `lint` and `tests` jobs run on pull requests targeting `main` and pushes to `main`.
+  - `lint` runs on Python 3.13.
+  - `tests` runs on Python 3.9 and 3.13.
+- Release workflow:
+  - release runs only for pushed tags matching `[0-9]*.[0-9]*.[0-9]*`;
+  - valid tags are `X.Y.Z` and `X.Y.Z-betaN` (for N >= 1);
+  - leading `v` tags (`vX.Y.Z`), zero-filled components, `beta0`, suffixes, and other prerelease/build forms are rejected.
+  - `X.Y.Z-betaN` publishes as Python version `X.Y.ZbN`.
+- Publish endpoint:
+  - `https://forgejo.alexlab.nl/api/packages/public/pypi`
+- Public simple index:
+  - `https://forgejo.alexlab.nl/api/packages/public/pypi/simple/rpi-groove-ir-emitter/`
+- Required repository configuration:
+  - variable: `FORGEJO_PACKAGE_USERNAME` (non-secret)
+  - secret: `FORGEJO_PACKAGE_TOKEN` owned by that account, with `public` organization package `write:package` scope
+- Credential-free installation examples:
+  - stable: `python -m pip install --index-url https://forgejo.alexlab.nl/api/packages/public/pypi/simple rpi-groove-ir-emitter==X.Y.Z`
+  - beta: `python -m pip install --index-url https://forgejo.alexlab.nl/api/packages/public/pypi/simple rpi-groove-ir-emitter==X.Y.ZbN`
+- The publish step fails on existing versions (immutable duplicates are not overwritten), validates artifacts before upload, and verifies published wheel/sdist hashes from the public index.
+- TLS behavior is normal HTTPS with hostname verification enabled; no certificate bypass or insecure mode is used.
+- Branch/tag protection and first successful hosted tag-to-publish-to-install validation are operator-owned and remain out-of-band during this implementation.
+
 ## License
 
 See the `LICENSE` file for license details.
