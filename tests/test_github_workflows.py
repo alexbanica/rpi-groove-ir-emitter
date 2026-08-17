@@ -134,7 +134,7 @@ class TestGithubWorkflows(unittest.TestCase):
     def test_actions_are_pinned_to_approved_immutable_shas(self) -> None:
         expected = {
             "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
-            "actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1",
+            "actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97",
         }
         for name in ("ci.yml", "publish.yml"):
             workflow = self._workflow(name)
@@ -148,7 +148,7 @@ class TestGithubWorkflows(unittest.TestCase):
 
         self.assertIn("lint:", ci)
         self.assertIn("tests:", ci)
-        self.assertEqual(ci.count("python-version: '3.13'"), 2)
+        self.assertEqual(ci.count('python-version: "3.13"'), 2)
         self.assertNotIn("3.9", ci)
         self.assertNotIn("matrix:", ci)
         self.assertIn("ubuntu-latest", ci)
@@ -178,11 +178,11 @@ class TestGithubWorkflows(unittest.TestCase):
         publish = self._workflow("publish.yml")
 
         self.assertIn("concurrency:", publish)
-        self.assertIn("publish-forgejo-${{ github.ref }}", publish)
+        self.assertIn("${{ github.workflow }}-${{ github.ref }}", publish)
         self.assertIn("cancel-in-progress: false", publish)
         self.assertNotIn("matrix:", publish)
         self.assertEqual(publish.count("runs-on: ubuntu-latest"), 1)
-        self.assertIn("python-version: '3.13'", publish)
+        self.assertIn('python-version: "3.13"', publish)
 
     def test_release_checks_out_exact_tag_and_passes_release_inputs_only_to_publisher(self) -> None:
         publish = self._workflow("publish.yml")

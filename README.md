@@ -116,7 +116,7 @@ sudo pigpiod
   - `lint` runs on Python 3.13.
   - `tests` runs on Python 3.13 without a version matrix; hosted CI does not test Python 3.9.
 - Release workflow:
-  - release runs only for pushed tags matching `[0-9]*.[0-9]*.[0-9]*`;
+  - release runs only for pushed tags matching `[0-9]*.[0-9]*.[0-9]*` or `[0-9]*.[0-9]*.[0-9]*-beta[1-9][0-9]*`;
   - valid tags are `X.Y.Z` and `X.Y.Z-betaN` (for N >= 1);
   - leading `v` tags (`vX.Y.Z`), zero-filled components, `beta0`, suffixes, and other prerelease/build forms are rejected.
   - `X.Y.Z-betaN` publishes as Python version `X.Y.ZbN`.
@@ -125,12 +125,13 @@ sudo pigpiod
 - Public simple index:
   - `https://forgejo.alexlab.nl/api/packages/public/pypi/simple/rpi-groove-ir-emitter/`
 - Required repository configuration:
-  - variable: `FORGEJO_PACKAGE_USERNAME` (non-secret)
+  - secret: `FORGEJO_PACKAGE_USERNAME`
   - secret: `FORGEJO_PACKAGE_TOKEN` owned by that account, with `public` organization package `write:package` scope
 - Credential-free installation examples:
   - stable: `python -m pip install --index-url https://forgejo.alexlab.nl/api/packages/public/pypi/simple rpi-groove-ir-emitter==X.Y.Z`
   - beta: `python -m pip install --index-url https://forgejo.alexlab.nl/api/packages/public/pypi/simple rpi-groove-ir-emitter==X.Y.ZbN`
 - The publish step fails on existing versions (immutable duplicates are not overwritten), validates artifacts before upload, and verifies published wheel/sdist hashes from the public index.
+- Workflows use the shared `.github/workflows/ci.yml` and `.github/workflows/publish.yml` names, immutable action SHA pins, non-persisted checkout credentials, and per-workflow/per-ref concurrency. Dependabot groups weekly GitHub Actions updates.
 - TLS behavior is normal HTTPS with hostname verification enabled; no certificate bypass or insecure mode is used.
 - Branch/tag protection and first successful hosted tag-to-publish-to-install validation are operator-owned and remain out-of-band during this implementation.
 
