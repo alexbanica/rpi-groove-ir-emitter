@@ -1,0 +1,24 @@
+include LICENSE
+include README.md
+include setup.py
+recursive-include ir_emitter *.py
+
+prune .github
+prune .venv
+prune .venv*
+prune venv
+prune venv*
+prune .cache
+prune .ruff_cache
+prune .pytest_cache
+prune specs
+prune scripts
+prune tests
+
+global-exclude .DS_Store
+global-exclude *.py[cod]
+global-exclude __pycache__
+global-exclude .coverage
+global-exclude .idea
+global-exclude .vscode
+global-exclude *.swp
