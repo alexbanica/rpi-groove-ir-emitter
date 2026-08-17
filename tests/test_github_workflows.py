@@ -189,7 +189,7 @@ class TestGithubWorkflows(unittest.TestCase):
 
         self.assertIn("ref: ${{ github.ref }}", publish)
         self.assertIn("RELEASE_TAG: ${{ github.ref_name }}", publish)
-        self.assertIn("FORGEJO_PACKAGE_USERNAME: ${{ vars.FORGEJO_PACKAGE_USERNAME }}", publish)
+        self.assertIn("FORGEJO_PACKAGE_USERNAME: ${{ secrets.FORGEJO_PACKAGE_USERNAME }}", publish)
         self.assertIn("FORGEJO_PACKAGE_TOKEN: ${{ secrets.FORGEJO_PACKAGE_TOKEN }}", publish)
         self.assertRegex(publish, r"python (?:-m scripts\.publish_forgejo|scripts/publish_forgejo\.py)")
 
