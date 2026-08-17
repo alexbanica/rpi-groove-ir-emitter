@@ -31,5 +31,5 @@ jobs:
           python scripts/publish_forgejo.py
         env:
           RELEASE_TAG: ${{ github.ref_name }}
-          FORGEJO_PACKAGE_USERNAME: ${{ vars.FORGEJO_PACKAGE_USERNAME }}
+          FORGEJO_PACKAGE_USERNAME: ${{ secrets.FORGEJO_PACKAGE_USERNAME }}
           FORGEJO_PACKAGE_TOKEN: ${{ secrets.FORGEJO_PACKAGE_TOKEN }}
