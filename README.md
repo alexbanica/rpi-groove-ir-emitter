@@ -114,7 +114,7 @@ sudo pigpiod
 - GitHub Actions gates:
   - `lint` and `tests` jobs run on pull requests targeting `main` and pushes to `main`.
   - `lint` runs on Python 3.13.
-  - `tests` runs on Python 3.9 and 3.13.
+  - `tests` runs on Python 3.13 without a version matrix; hosted CI does not test Python 3.9.
 - Release workflow:
   - release runs only for pushed tags matching `[0-9]*.[0-9]*.[0-9]*`;
   - valid tags are `X.Y.Z` and `X.Y.Z-betaN` (for N >= 1);

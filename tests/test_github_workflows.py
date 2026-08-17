@@ -143,13 +143,14 @@ class TestGithubWorkflows(unittest.TestCase):
             self.assertNotIn("actions/checkout@v", workflow)
             self.assertNotIn("actions/setup-python@v", workflow)
 
-    def test_ci_has_distinct_lint_and_python_version_test_jobs(self) -> None:
+    def test_ci_has_distinct_python_313_jobs_without_a_matrix(self) -> None:
         ci = self._workflow("ci.yml")
 
         self.assertIn("lint:", ci)
         self.assertIn("tests:", ci)
-        self.assertIn("python-version: '3.13'", ci)
-        self.assertRegex(ci, r"python-version:\s*\[\s*['\"]?3\.9['\"]?\s*,\s*['\"]?3\.13['\"]?\s*\]")
+        self.assertEqual(ci.count("python-version: '3.13'"), 2)
+        self.assertNotIn("3.9", ci)
+        self.assertNotIn("matrix:", ci)
         self.assertIn("ubuntu-latest", ci)
 
     def test_ci_uses_pinned_dependencies_and_canonical_quality_commands(self) -> None:

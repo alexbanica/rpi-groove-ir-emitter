@@ -2,6 +2,19 @@
 
 Status: Approved
 
+## Iteration: Python 3.13-only hosted CI (2026-08-17)
+
+The initial approved contract added a Python 3.9 and 3.13 test matrix. The
+implemented workflow installs the complete pinned release toolchain in every
+test job, but `build==1.5.0` requires Python 3.10 or newer. The Python 3.9 job
+therefore fails during dependency installation before unit tests run.
+
+This iteration removes Python 3.9 from GitHub Actions and makes the hosted test
+job Python 3.13-only. It preserves the separate lint and test outcomes, pinned
+release tooling, release workflow, runtime behavior, and the existing package
+metadata declaration `python_requires='>=3.9'`. Hosted CI no longer claims or
+validates Python 3.9 compatibility.
+
 ## Purpose
 
 Add deterministic GitHub Actions quality gates for contributions and `main`,
@@ -56,6 +69,8 @@ tools and Python version semantics rather than npm behavior.
   or npm tarball naming.
 - Changing IR emission, GPIO, CLI, JSON, launcher, or runtime dependency
   behavior.
+- Changing the package's existing `python_requires='>=3.9'` metadata; this
+  iteration changes hosted CI coverage only.
 - Creating the first real tag or performing the first live publication during
   implementation.
 
@@ -87,6 +102,8 @@ tools and Python version semantics rather than npm behavior.
   introduced.
 - Pull-request CI runs only for pull requests whose base branch is `main`.
 - Merge CI is represented by the resulting push to `main`.
+- Both hosted CI outcomes run on Python 3.13. The test job is a single job and
+  does not use a Python-version matrix.
 - Exact tag validation accepts only the stable and beta forms above.
 - Leading `v`, whitespace, leading-zero components, `beta0`, dotted
   prereleases, arbitrary suffixes, and build metadata are rejected before any
@@ -126,8 +143,9 @@ tools and Python version semantics rather than npm behavior.
 3. CI checks out the triggering revision with read-only contents permission.
 4. The lint gate installs the declared lint tooling and runs the canonical Ruff
    check. Any diagnostic or tool failure fails the gate.
-5. The test gate runs the repository unit-test command. Any failed test, test
-   discovery error, or command failure fails the gate.
+5. The test gate runs once on Python 3.13 and executes the repository unit-test
+   command. Any failed test, test discovery error, dependency installation
+   error, or command failure fails the gate.
 6. Lint and tests are visible as distinct required outcomes so branch
    protection can require both checks.
 7. CI never receives, references, or exposes Forgejo publication credentials.
@@ -229,6 +247,8 @@ tools and Python version semantics rather than npm behavior.
 ## Impact And Regression Considerations
 
 - CI adds mandatory quality feedback but does not change runtime code behavior.
+- Hosted CI validates Python 3.13 only. The unchanged `python_requires='>=3.9'`
+  metadata is not a claim that Python 3.9 remains covered by GitHub Actions.
 - Release builds temporarily override the tracked `1.0.0` metadata with the tag
   version; incorrect alignment could publish misleading package metadata, so
   both distribution and import-package versions require deterministic tests.
@@ -255,7 +275,8 @@ tools and Python version semantics rather than npm behavior.
   selection, artifact allowlisting, credential isolation, immutable duplicate
   failure, public verification, cleanup, and failure propagation.
 - Add structural workflow tests for branch/tag triggers, read-only permissions,
-  exact tag checkout, no publish matrix, serialized same-tag runs, credential
+  exact tag checkout, Python 3.13-only lint and test jobs, absence of Python 3.9
+  and a test matrix, no publish matrix, serialized same-tag runs, credential
   placement, fixed endpoints, and prohibited insecure or mutating behavior.
 - Build a source distribution and wheel locally without publishing and inspect
   their metadata and contents.
@@ -264,10 +285,23 @@ tools and Python version semantics rather than npm behavior.
   the hosted workflow, authenticated Forgejo upload, anonymous exact-version
   download, and clean installation from the public index.
 
+## Super-agent Delivery Record (2026-08-17)
+
+- Delivered the Python 3.13-only hosted CI behavior described by this iteration.
+- Validation performed: focused workflow structural tests, the repository unit
+  suite, and `git diff --check`.
+- Validation skipped: hosted GitHub Actions execution and all live Forgejo
+  publication checks.
+- QA and independent code review were skipped by the requested `super-agent`
+  workflow.
+- Documentation was updated to state that hosted CI does not test Python 3.9.
+
 ## Documentation Requirements
 
 - Document the `main` pull-request and push quality gates and the exact local
   lint/test commands.
+- Document that both hosted quality outcomes use Python 3.13 and that hosted CI
+  does not test Python 3.9.
 - Document accepted stable and beta tag forms and rejected leading-`v` tags.
 - Explain the Python-specific beta mapping from `X.Y.Z-betaN` tags to
   `X.Y.ZbN` package versions.
