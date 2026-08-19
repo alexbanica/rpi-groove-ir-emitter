@@ -31,11 +31,8 @@ TAG_RE = re.compile(
 )
 
 PUBLISH_URL = "https://forgejo.alexlab.nl/api/packages/public/pypi"
-PACKAGE_INDEX_URL = "https://forgejo.alexlab.nl/api/packages/public/pypi/simple"
-DEPENDENCY_INDEX_URL = "https://pypi.org/simple"
-SIMPLE_INDEX_URL = (
-    "https://forgejo.alexlab.nl/api/packages/public/pypi/simple/rpi-groove-ir-emitter/"
-)
+CLIENT_INDEX_URL = "https://pypi.alexlab.nl/simple/"
+SIMPLE_INDEX_URL = f"{CLIENT_INDEX_URL}rpi-groove-ir-emitter/"
 EXPECTED_DISTRIBUTION_NAME = "rpi-groove-ir-emitter"
 EXPECTED_DISTRIBUTION_NORMALIZED = "rpi_groove_ir_emitter"
 
@@ -447,9 +444,7 @@ def _verify_public_install(
             "--only-binary",
             EXPECTED_DISTRIBUTION_NAME,
             "--index-url",
-            PACKAGE_INDEX_URL,
-            "--extra-index-url",
-            DEPENDENCY_INDEX_URL,
+            CLIENT_INDEX_URL,
             "--target",
             str(target_dir),
             f"{EXPECTED_DISTRIBUTION_NAME}=={release_version}",

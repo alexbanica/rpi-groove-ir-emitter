@@ -122,16 +122,16 @@ sudo pigpiod
   - `X.Y.Z-betaN` publishes as Python version `X.Y.ZbN`.
 - Publish endpoint:
   - `https://forgejo.alexlab.nl/api/packages/public/pypi`
-- Public simple index:
-  - `https://forgejo.alexlab.nl/api/packages/public/pypi/simple/rpi-groove-ir-emitter/`
+- Routed installation index:
+  - `https://pypi.alexlab.nl/simple/`
 - Required repository configuration:
   - secret: `FORGEJO_PACKAGE_USERNAME`
   - secret: `FORGEJO_PACKAGE_TOKEN` owned by that account, with `public` organization package `write:package` scope
 - Credential-free installation examples:
-  - stable: `python -m pip install --index-url https://forgejo.alexlab.nl/api/packages/public/pypi/simple --extra-index-url https://pypi.org/simple rpi-groove-ir-emitter==X.Y.Z`
-  - beta: `python -m pip install --index-url https://forgejo.alexlab.nl/api/packages/public/pypi/simple --extra-index-url https://pypi.org/simple rpi-groove-ir-emitter==X.Y.ZbN`
-- Forgejo supplies `rpi-groove-ir-emitter`; the additional public PyPI index supplies dependencies such as `pigpio` and the selected board GPIO package that are not published in Forgejo.
-- The publish step fails on existing versions (immutable duplicates are not overwritten), validates artifacts before upload, verifies published wheel/sdist hashes from the public index, and performs a credential-free exact-version install with dependency resolution.
+  - stable: `python -m pip install --index-url https://pypi.alexlab.nl/simple/ rpi-groove-ir-emitter==X.Y.Z`
+  - beta: `python -m pip install --index-url https://pypi.alexlab.nl/simple/ rpi-groove-ir-emitter==X.Y.ZbN`
+- Publish continues directly to Forgejo. Installation and release verification use the routed index, which serves this Forgejo-hosted package and resolves public dependencies such as `pigpio` and the selected board GPIO package through the cluster cache.
+- The publish step fails on existing versions (immutable duplicates are not overwritten), validates artifacts before upload, verifies published wheel/sdist hashes through the routed index, and performs a credential-free exact-version install with dependency resolution.
 - Workflows use the shared `.github/workflows/ci.yml` and `.github/workflows/publish.yml` names, immutable action SHA pins, non-persisted checkout credentials, and per-workflow/per-ref concurrency. Dependabot groups weekly GitHub Actions updates.
 - TLS behavior is normal HTTPS with hostname verification enabled; no certificate bypass or insecure mode is used.
 - Branch/tag protection and first successful hosted tag-to-publish-to-install validation are operator-owned and remain out-of-band during this implementation.
