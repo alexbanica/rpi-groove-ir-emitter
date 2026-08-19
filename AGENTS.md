@@ -20,7 +20,11 @@
 
 ## Project implementation status
 
-The codebase is aligned to a DDD + Onion style layout.
+The tracked runtime is currently a compact legacy package centered on
+`ir_emitter/IREmitter.py` and `ir_emitter/__main__.py`. It does not currently
+contain separate domain, application, infrastructure, or controller package
+trees. The dependency rules below govern future restructuring; do not describe
+those layers as already implemented.
 
 ### Layers
 
@@ -31,18 +35,6 @@ The codebase is aligned to a DDD + Onion style layout.
 - `shared/constants`: centralized static strings and defaults.
 
 Dependencies point inward. `controllers` and `infrastructures` may depend on application/domain contracts, while `domains` must stay independent of CLI parsing, JSON persistence, pigpio, GPIO, and filesystem concerns.
-
-### Project-specific architecture
-
-- `ir_emitter/domains/entities`: raw pulse frame and playback model objects.
-- `ir_emitter/domains/dtos`: datastore-free transfer objects for pulse input/output.
-- `ir_emitter/domains/interfaces`: domain-facing contracts; every interface must use the `Interface` suffix.
-- `ir_emitter/applications/services`: emit/playback orchestration services.
-- `ir_emitter/infrastructures/emitters`: concrete carrier-wave and pulse emission adapters.
-- `ir_emitter/infrastructures/gpio`: pigpio/GPIO boundary implementations.
-- `ir_emitter/infrastructures/persistences`: JSON pulse file loading adapters.
-- `ir_emitter/controllers/requests` and `ir_emitter/controllers/responses`: CLI DTOs.
-- `ir_emitter/shared/constants`: default GPIO, carrier, and static text values.
 
 ### Naming standards
 
@@ -68,13 +60,24 @@ The following behavior must remain stable unless a new approved spec changes it:
 
 ### Testing
 
-- Unit tests live in `tests/`.
-- Run with:
-
-```bash
-python -m unittest discover -s tests -p 'test_*.py'
-```
+- No tracked automated tests currently exist, and the tracked package has no
+  separated deterministic domain source layer. Unit-test and test-first phases
+  are therefore not applicable under the domain-only policy. Ignored
+  `__pycache__` files are not source or test coverage.
 
 ### API docs scope
 
 No HTTP API exists. OpenAPI and `.http` artifacts are not applicable for the current project scope.
+
+## Durable Documentation Authority
+
+- Current package source, `setup.py`, `MANIFEST.in`, launcher and publishing
+  scripts, workflow files, and `README.md` supersede removed completed
+  SPEC/PLAN history. Historical artifacts remain available in Git.
+- Keep CLI, pulse format, installation, wiring, package, release, and operator
+  behavior in `README.md`.
+- Static checks cannot prove hosted GitHub Actions, Forgejo authentication or
+  publication, anonymous installation, board-specific dependency selection,
+  pigpio connectivity, GPIO electrical safety, carrier timing, IR transmission,
+  or physical-device response. Report those outcomes as unverified unless they
+  are exercised in the corresponding environment.

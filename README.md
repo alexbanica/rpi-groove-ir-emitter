@@ -195,6 +195,13 @@ The registry upload endpoint is
 is
 `https://forgejo.alexlab.nl/api/packages/public/pypi/simple/rpi-groove-ir-emitter/`.
 
+The workflows and publisher implement this contract, but repository-local
+documentation and static checks do not prove hosted Actions execution, Forgejo
+credentials or upload, public-index availability, anonymous installation with
+dependencies, target-board dependency selection, pigpio connectivity, GPIO
+carrier timing, IR transmission, or response from a physical device. Treat
+those outcomes as unverified until exercised in their target environments.
+
 ## License
 
 See [LICENSE](LICENSE).
