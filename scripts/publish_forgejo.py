@@ -510,8 +510,11 @@ def _safe_verify_public_artifacts(
 
 
 def _run_quality_gates(repo_root: Path, env: dict[str, str]) -> None:
-    _run_command(["python", "-m", "unittest", "discover", "-s", "tests", "-p", "test_*.py"], repo_root, env)
-    _run_command(["python", "-m", "ruff", "check", "setup.py", "ir_emitter", "tests", "scripts"], repo_root, env)
+    _run_command(
+        ["python", "-m", "ruff", "check", "setup.py", "ir_emitter", "scripts"],
+        repo_root,
+        env,
+    )
 
 
 def _run_egg_info(repo_root: Path, target_dir: Path, env: dict[str, str]) -> PackageMetadata:

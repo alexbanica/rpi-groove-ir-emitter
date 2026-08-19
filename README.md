@@ -109,12 +109,12 @@ sudo pigpiod
 ## CI and release publishing
 
 - Quality checks:
-  - Canonical lint command: `python -m ruff check setup.py ir_emitter tests scripts`
-  - Canonical test command: `python -m unittest discover -s tests -p 'test_*.py'`
+  - Canonical lint command: `python -m ruff check setup.py ir_emitter scripts`
+  - No automated test command is configured because the repository currently
+    has no tracked deterministic domain-source tests.
 - GitHub Actions gates:
-  - `lint` and `tests` jobs run on pull requests targeting `main` and pushes to `main`.
+  - The `lint` job runs on pull requests targeting `main` and pushes to `main`.
   - `lint` runs on Python 3.13.
-  - `tests` runs on Python 3.13 without a version matrix; hosted CI does not test Python 3.9.
 - Release workflow:
   - release runs only for pushed tags matching `[0-9]*.[0-9]*.[0-9]*` or `[0-9]*.[0-9]*.[0-9]*-beta[1-9][0-9]*`;
   - valid tags are `X.Y.Z` and `X.Y.Z-betaN` (for N >= 1);
@@ -131,7 +131,7 @@ sudo pigpiod
   - stable: `python -m pip install --index-url https://forgejo.alexlab.nl/api/packages/public/pypi/simple --extra-index-url https://pypi.org/simple rpi-groove-ir-emitter==X.Y.Z`
   - beta: `python -m pip install --index-url https://forgejo.alexlab.nl/api/packages/public/pypi/simple --extra-index-url https://pypi.org/simple rpi-groove-ir-emitter==X.Y.ZbN`
 - Forgejo supplies `rpi-groove-ir-emitter`; the additional public PyPI index supplies dependencies such as `pigpio` and the selected board GPIO package that are not published in Forgejo.
-- The publish step fails on existing versions (immutable duplicates are not overwritten), validates artifacts before upload, verifies published wheel/sdist hashes from the public index, and performs a credential-free exact-version install with dependency resolution.
+- The publish step runs the canonical lint gate, fails on existing versions (immutable duplicates are not overwritten), validates artifacts before upload, verifies published wheel/sdist hashes from the public index, and performs a credential-free exact-version install with dependency resolution.
 - Workflows use the shared `.github/workflows/ci.yml` and `.github/workflows/publish.yml` names, immutable action SHA pins, non-persisted checkout credentials, and per-workflow/per-ref concurrency. Dependabot groups weekly GitHub Actions updates.
 - TLS behavior is normal HTTPS with hostname verification enabled; no certificate bypass or insecure mode is used.
 - Branch/tag protection and first successful hosted tag-to-publish-to-install validation are operator-owned and remain out-of-band during this implementation.
