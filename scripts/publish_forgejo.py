@@ -31,6 +31,8 @@ TAG_RE = re.compile(
 )
 
 PUBLISH_URL = "https://forgejo.alexlab.nl/api/packages/public/pypi"
+PACKAGE_INDEX_URL = "https://forgejo.alexlab.nl/api/packages/public/pypi/simple"
+DEPENDENCY_INDEX_URL = "https://pypi.org/simple"
 SIMPLE_INDEX_URL = (
     "https://forgejo.alexlab.nl/api/packages/public/pypi/simple/rpi-groove-ir-emitter/"
 )
@@ -429,6 +431,34 @@ def verify_public_artifacts(
     return None
 
 
+def _verify_public_install(
+    release_version: str,
+    target_dir: Path,
+    env: dict[str, str],
+) -> None:
+    _run_command(
+        [
+            "python",
+            "-m",
+            "pip",
+            "install",
+            "--no-cache-dir",
+            "--no-input",
+            "--only-binary",
+            EXPECTED_DISTRIBUTION_NAME,
+            "--index-url",
+            PACKAGE_INDEX_URL,
+            "--extra-index-url",
+            DEPENDENCY_INDEX_URL,
+            "--target",
+            str(target_dir),
+            f"{EXPECTED_DISTRIBUTION_NAME}=={release_version}",
+        ],
+        Path("."),
+        sanitize_environment(env),
+    )
+
+
 def validate_artifacts(artifact_paths: Sequence[Path], release_version: str) -> None:
     sdist, wheel, package_name = _select_artifacts(artifact_paths, release_version)
     _validate_sdist(sdist, package_name, release_version)
@@ -603,12 +633,13 @@ def publish(*, env: Optional[dict[str, str]] = None, repo_root: Optional[Path] =
     version_file = repo_root / "ir_emitter" / "__init__.py"
     dist_dir = temp_root / "dist"
     egg_info_dir = temp_root / "egg-info"
+    install_dir = temp_root / "install"
     dist_dir.mkdir(parents=True)
     egg_info_dir.mkdir(parents=True)
 
     global _TEMP_ROOT, _TEMP_PATHS
     _TEMP_ROOT = temp_root
-    _TEMP_PATHS = [dist_dir, egg_info_dir]
+    _TEMP_PATHS = [dist_dir, egg_info_dir, install_dir]
 
     original_version: Optional[str] = None
     release_error: Optional[BaseException] = None
@@ -631,6 +662,7 @@ def publish(*, env: Optional[dict[str, str]] = None, repo_root: Optional[Path] =
         _upload_artifacts(sdist, wheel, username, token, base_env)
 
         _safe_verify_public_artifacts([sdist, wheel], release_version)
+        _verify_public_install(release_version, install_dir, base_env)
     except BaseException as error:
         release_error = error
     finally:
