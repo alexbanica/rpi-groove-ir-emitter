@@ -1,141 +1,203 @@
-# RPI GROOVE IR Emitter
+# Raspberry Pi Grove IR Emitter
 
-Transmit infrared (IR) signals from a Raspberry Pi (and compatible SBCs) using JSON-defined pulse sequences. Useful for automating IR-controlled devices such as fans, TVs, air conditioners, and more.
+`rpi-groove-ir-emitter` replays raw infrared pulse timings through a Raspberry
+Pi GPIO pin. It reads pulse captures from JSON, converts each mark into a
+pigpio carrier waveform, and keeps the output low during each space.
 
-## Features
+The package name contains the historical spelling `groove`; the supported
+hardware use case is a Grove IR emitter, or another correctly driven IR LED,
+connected to a Raspberry Pi running the pigpio daemon.
 
-- Plays raw IR pulse sequences defined in JSON files
-- Supports carrier frequency and duty cycle control
-- Repeats entire frames as needed
-- Includes example IR command files for a ventilator device
+## What it currently does
+
+- Loads the receiver-compatible JSON shape
+  `{ "gpio_in": <int>, "pulse_us": <list[int]> }`.
+- Treats zero-based even-numbered pulse entries, starting with the first entry,
+  as carrier marks and the alternating entries as spaces, with every duration
+  expressed in microseconds.
+- Emits on BCM GPIO 12 by default, at a 38 kHz carrier and a 33% duty cycle.
+- Allows the output GPIO, carrier frequency, and whole-frame repeat count to be
+  changed through the Python module CLI.
+- Includes three sample captures for a ventilator under `examples/`.
+
+`gpio_in` is capture metadata only. It is printed when the file is loaded and
+does not select the output pin. The CLI does not currently expose the duty
+cycle; changing it requires using `IREmitter` from Python.
 
 ## Requirements
 
-- Hardware:
-    - Raspberry Pi (or compatible board with GPIO)
-    - IR LED/emitter module (e.g., Grove IR Emitter) and proper drive circuitry
-    - Wiring or Grove/Base HAT for connectivity
+- A Raspberry Pi with Linux and a usable BCM GPIO pin.
+- A Grove IR emitter or an IR LED with appropriate current limiting and drive
+  circuitry. Do not drive a high-current IR LED directly from a GPIO pin.
+- Python 3.9 or newer.
+- The pigpio daemon and Python package.
 
-- Software:
-    - Python 3.9+
-    - pigpio (daemon + Python package)
-    - One of the board-specific GPIO packages (auto-detected during install):
-        - RPi.GPIO + spidev (Raspberry Pi)
-        - Hobot.GPIO + spidev (Certain Hobot boards)
-        - Jetson.GPIO (NVIDIA Jetson)
-    - Linux (GPIO access required)
+The package installer selects an additional board GPIO dependency by inspecting
+the target system: `RPi.GPIO` and `spidev` on Raspberry Pi, `Hobot.GPIO` and
+`spidev` on supported Hobot systems, or `Jetson.GPIO` otherwise. Install the
+project on the target device so that detection reflects the actual board.
 
-Notes:
-- Start the pigpio daemon before running: `sudo pigpiod`
-- Ensure your user has permissions to access GPIO and pigpio socket, or run with `sudo` when necessary.
+Install pigpio using the method provided by your operating system, then start
+the daemon with `sudo pigpiod` (or the equivalent service supplied by the
+system). The emitter exits with status 2 if it cannot connect to pigpio.
 
 ## Installation
 
-From the project root:
-```bash 
-pip install .
+From a source checkout:
+
+```bash
+python3 -m venv .venv
+./.venv/bin/python -m pip install .
 ```
 
-If pigpio is not present, install the Python package and start the daemon:
+Published releases are available from the public Forgejo package index. PyPI is
+kept as an additional index because runtime dependencies are not hosted in the
+Forgejo registry:
+
 ```bash
-pip install pigpio sudo pigpiod
+python3 -m pip install \
+  --index-url https://forgejo.alexlab.nl/api/packages/public/pypi/simple \
+  --extra-index-url https://pypi.org/simple \
+  rpi-groove-ir-emitter
 ```
 
 ## Wiring
 
-- Connect your IR LED/emitter to a suitable GPIO pin via a current-limiting resistor and a transistor driver if required by your emitter module.
-- Default transmit pin in examples is BCM GPIO 12. You can change it with `--out-gpio`.
+The default output is BCM GPIO 12, not physical header pin 12. Connect the
+emitter according to its electrical requirements and use a transistor driver
+when the GPIO cannot safely provide the required current. Verify pin numbering,
+polarity, voltage, and current limits before enabling playback.
 
-Always verify polarity and maximum current ratings for your emitter module.
+## Pulse file format
+
+The input file must be JSON with a `pulse_us` list. Receiver captures also carry
+`gpio_in` metadata:
+
+```json
+{
+  "gpio_in": 16,
+  "pulse_us": [9050, 4490, 595, 565, 565, 570]
+}
+```
+
+Durations are converted to integers. The first duration is a mark, the second
+is a space, and the sequence continues alternating between them. Use positive
+microsecond durations captured from the source remote. When `gpio_in` is absent,
+the loader reports its value as `-1`; playback is otherwise unchanged.
 
 ## Usage
 
-Use the launcher so it uses the repository virtual environment:
+For the full CLI, invoke the module directly:
+
+```bash
+python3 -m ir_emitter examples/ventilator-onoff.json
+python3 -m ir_emitter examples/ventilator-speed.json \
+  --out-gpio 12 \
+  --carrier 38000 \
+  --repeat 2
+```
+
+CLI arguments:
+
+- `file`: required path to a pulse JSON file.
+- `--out-gpio`: BCM output pin; default `12`.
+- `--carrier`: carrier frequency in hertz; default `38000`.
+- `--repeat`: number of complete frame transmissions; default `1`.
+
+On successful playback the command reports the number of loaded durations and
+prints `Playback finished.`. Interruptions and malformed files are not converted
+into custom error messages; Python reports those failures directly.
+
+### Repository launcher
+
+The checkout also contains a convenience launcher:
+
 ```bash
 ./run.sh --input examples/ventilator-onoff.json
 ```
 
-`run.sh` resolves the repository root from its location, validates `--input`, and:
-- uses `.venv/bin/python` when available;
-- creates `.venv` with `python3 -m venv .venv` on first run;
-- installs the project into `.venv` with `./.venv/bin/python -m pip install .`.
+By default, `run.sh` uses `.venv/bin/python`. If that interpreter does not
+exist, the script creates `.venv` and installs the project into it before
+running. It does not start pigpio.
 
-For containers that already include the required Python packages in the image, bypass the repository `.venv`:
+For a container or system image that already contains all runtime dependencies,
+bypass the repository virtual environment with either form:
+
 ```bash
 ./run.sh --no-venv --input examples/ventilator-onoff.json
 RUN_SH_NO_VENV=1 ./run.sh --input examples/ventilator-onoff.json
 ```
 
-No-venv mode runs `python3 -m ir_emitter <file>` and does not inspect, create, or install into `.venv`.
-
-`run.sh` intentionally supports only launcher options (`--input` and `--no-venv`) and passes only the resolved file path to the module execution. For custom GPIO/cycle/repeat settings, use the existing positional-module path:
-```bash
-python -m ir_emitter examples/ventilator-onoff.json --out-gpio 12 --carrier 38000 --repeat 1
-```
-
-Module parameters:
-- `file` (positional): Path to JSON file containing the recorded pulses
-- `--out-gpio`: BCM pin number for the transmitter (default: 12)
-- `--carrier`: Carrier frequency in Hz (default: commonly 38000)
-- `--repeat`: How many times to replay the entire frame (default: 1)
-
-Before any playback, ensure:
-```bash
-sudo pigpiod
-```
-
-`run.sh` does not start `pigpio` for you.
+The launcher recognizes only `--input` and `--no-venv`; other arguments are
+ignored. It passes only the resolved file path to `python -m ir_emitter`, so use
+the module CLI when changing GPIO, carrier, or repeat settings.
 
 ## Troubleshooting
 
-- pigpio daemon not running:
-    - Error: cannot connect to pigpio → run `sudo pigpiod`
-- Weak or unreliable transmission:
-    - Verify emitter orientation and line of sight
-    - Use a transistor driver and proper resistor
-    - Reduce ambient IR noise or move closer
-- Timing issues:
-    - Confirm correct carrier frequency (38 kHz is common but not universal)
-    - Validate the pulse list alternates mark/space and uses microseconds
-- Permissions:
-    - If GPIO access fails, try `sudo` or adjust user group permissions
+- `Could not connect to pigpio daemon`: start `pigpiod` and confirm its socket
+  is reachable. This failure exits with status 2.
+- `Error importing pigpio`: install the `pigpio` Python package in the same
+  interpreter or virtual environment used to run the emitter.
+- Weak or unreliable transmission: check emitter polarity, line of sight,
+  current limiting, transistor drive, supply voltage, and ambient IR noise.
+- Incorrect command response: confirm the captured carrier frequency and that
+  `pulse_us` begins with a mark and alternates mark/space durations.
+
+## Current project layout
+
+The tracked runtime is intentionally small:
+
+- `ir_emitter/__main__.py`: argument parsing, pigpio connection, and playback
+  coordination.
+- `ir_emitter/IREmitter.py`: JSON loading and pigpio waveform construction.
+- `ir_emitter/__init__.py`: package version and carrier/duty-cycle defaults.
+- `run.sh`: repository virtual-environment launcher.
+- `examples/`: sample ventilator pulse captures.
+- `scripts/publish_forgejo.py`: release build, validation, publication, and
+  anonymous install verification.
+
+There are currently no tracked domain, application, infrastructure, controller,
+or automated-test source files. Ignored `__pycache__` directories do not
+represent implemented package layers.
 
 ## Development
 
-- Use editable installs (`pip install -e .`) for local development
-- Keep JSON command files small and test frequently on hardware
-- Contributions are welcome via pull requests and issues
+Install the pinned development tools and run the repository's active local
+checks:
 
-## CI and release publishing
+```bash
+python3 -m pip install -r requirements-dev.txt
+python3 -m ruff check setup.py ir_emitter scripts
+sh -n run.sh
+```
 
-- Quality checks:
-  - Canonical lint command: `python -m ruff check setup.py ir_emitter tests scripts`
-  - Canonical test command: `python -m unittest discover -s tests -p 'test_*.py'`
-- GitHub Actions gates:
-  - `lint` and `tests` jobs run on pull requests targeting `main` and pushes to `main`.
-  - `lint` runs on Python 3.13.
-  - `tests` runs on Python 3.13 without a version matrix; hosted CI does not test Python 3.9.
-- Release workflow:
-  - release runs only for pushed tags matching `[0-9]*.[0-9]*.[0-9]*` or `[0-9]*.[0-9]*.[0-9]*-beta[1-9][0-9]*`;
-  - valid tags are `X.Y.Z` and `X.Y.Z-betaN` (for N >= 1);
-  - leading `v` tags (`vX.Y.Z`), zero-filled components, `beta0`, suffixes, and other prerelease/build forms are rejected.
-  - `X.Y.Z-betaN` publishes as Python version `X.Y.ZbN`.
+The repository currently has no tracked deterministic domain source logic, so
+its domain-only test policy leaves no applicable automated tests. Non-domain
+changes are validated with lint, syntax, build, structural, smoke, or operator
+checks as appropriate.
+
+## CI and releases
+
+- `.github/workflows/ci.yml` runs the Ruff command above on Python 3.13 for
+  pull requests targeting `main` and pushes to `main`.
+- `.github/workflows/publish.yml` runs on exact release tags and publishes a
+  source distribution and pure-Python wheel to the public Forgejo PyPI registry.
+- Stable tags use `X.Y.Z`; beta tags use `X.Y.Z-betaN` with `N >= 1` and are
+  published with the Python version `X.Y.ZbN`. Tags do not have a leading `v`.
+- Publication requires the repository secrets `FORGEJO_PACKAGE_USERNAME` and
+  `FORGEJO_PACKAGE_TOKEN`.
+- The publisher runs Ruff, validates package contents and metadata, rejects an
+  already-published version, verifies downloaded artifact hashes, and performs
+  an anonymous exact-version installation with dependency resolution.
 - Publish endpoint:
   - `https://forgejo.alexlab.nl/api/packages/public/pypi`
 - Routed installation index:
   - `https://pypi.alexlab.nl/simple/`
-- Required repository configuration:
-  - secret: `FORGEJO_PACKAGE_USERNAME`
-  - secret: `FORGEJO_PACKAGE_TOKEN` owned by that account, with `public` organization package `write:package` scope
 - Credential-free installation examples:
   - stable: `python -m pip install --index-url https://pypi.alexlab.nl/simple/ rpi-groove-ir-emitter==X.Y.Z`
   - beta: `python -m pip install --index-url https://pypi.alexlab.nl/simple/ rpi-groove-ir-emitter==X.Y.ZbN`
 - Publish continues directly to Forgejo. Installation and release verification use the routed index, which serves this Forgejo-hosted package and resolves public dependencies such as `pigpio` and the selected board GPIO package through the cluster cache.
-- The publish step fails on existing versions (immutable duplicates are not overwritten), validates artifacts before upload, verifies published wheel/sdist hashes through the routed index, and performs a credential-free exact-version install with dependency resolution.
-- Workflows use the shared `.github/workflows/ci.yml` and `.github/workflows/publish.yml` names, immutable action SHA pins, non-persisted checkout credentials, and per-workflow/per-ref concurrency. Dependabot groups weekly GitHub Actions updates.
-- TLS behavior is normal HTTPS with hostname verification enabled; no certificate bypass or insecure mode is used.
-- Branch/tag protection and first successful hosted tag-to-publish-to-install validation are operator-owned and remain out-of-band during this implementation.
 
 ## License
 
-See the `LICENSE` file for license details.
+See [LICENSE](LICENSE).
