@@ -189,18 +189,14 @@ checks as appropriate.
 - The publisher runs Ruff, validates package contents and metadata, rejects an
   already-published version, verifies downloaded artifact hashes, and performs
   an anonymous exact-version installation with dependency resolution.
-
-The registry upload endpoint is
-`https://forgejo.alexlab.nl/api/packages/public/pypi`; the public package index
-is
-`https://forgejo.alexlab.nl/api/packages/public/pypi/simple/rpi-groove-ir-emitter/`.
-
-The workflows and publisher implement this contract, but repository-local
-documentation and static checks do not prove hosted Actions execution, Forgejo
-credentials or upload, public-index availability, anonymous installation with
-dependencies, target-board dependency selection, pigpio connectivity, GPIO
-carrier timing, IR transmission, or response from a physical device. Treat
-those outcomes as unverified until exercised in their target environments.
+- Publish endpoint:
+  - `https://forgejo.alexlab.nl/api/packages/public/pypi`
+- Routed installation index:
+  - `https://pypi.alexlab.nl/simple/`
+- Credential-free installation examples:
+  - stable: `python -m pip install --index-url https://pypi.alexlab.nl/simple/ rpi-groove-ir-emitter==X.Y.Z`
+  - beta: `python -m pip install --index-url https://pypi.alexlab.nl/simple/ rpi-groove-ir-emitter==X.Y.ZbN`
+- Publish continues directly to Forgejo. Installation and release verification use the routed index, which serves this Forgejo-hosted package and resolves public dependencies such as `pigpio` and the selected board GPIO package through the cluster cache.
 
 ## License
 
